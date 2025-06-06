@@ -3,7 +3,7 @@ function App() {
   return (
     <>
       <div>
-        <span>placeholder</span>
+        <span className="text-blue-500">placeholder</span>
       </div>
     </>
   )
