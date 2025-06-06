@@ -15,4 +15,9 @@ export interface TimelineItem {
   Category: string;
   Epoch: number;
   AudioSize: number;
+}
+
+export interface TimelineResponse {
+  Body: any[]; 
+  Timeline: TimelineItem[];
 } 
