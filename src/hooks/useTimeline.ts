@@ -4,13 +4,14 @@ import type { TimelineItem, TimelineResponse } from '../types/Timeline';
 
 const ITEMS_PER_LOAD = 20;
 
-export function useTimeline(searchQuery: string) {
+export function useTimeline(searchQuery: string, selectedCategory: string | null) {
   const [fullItems, setFullItems] = useState<TimelineItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<TimelineItem[]>([]);
   const [displayedItems, setDisplayedItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -18,7 +19,9 @@ export function useTimeline(searchQuery: string) {
       .then(response => {
         if (response.data && Array.isArray(response.data.Timeline)) {
           setFullItems(response.data.Timeline);
-          // Filtering and setting initial displayed items will now happen in the filter effect
+          // Extract unique categories
+          const uniqueCategories = Array.from(new Set(response.data.Timeline.map(item => item.Category)));
+          setCategories(uniqueCategories);
         } else {
           setError('Invalid data structure received from API');
         }
@@ -31,14 +34,19 @@ export function useTimeline(searchQuery: string) {
       });
   }, []);
 
-  // Effect to filter items whenever fullItems or searchQuery changes
+  // Effect to filter items whenever fullItems, searchQuery, or selectedCategory changes
   useEffect(() => {
     let itemsToFilter = fullItems;
 
     if (searchQuery) {
-      itemsToFilter = fullItems.filter(item =>
-        // Perform case-insensitive search on the start of the CreateDate string
+      itemsToFilter = itemsToFilter.filter(item =>
         item.CreateDate.toLowerCase().startsWith(searchQuery.toLowerCase())
+      );
+    }
+
+    if (selectedCategory) {
+      itemsToFilter = itemsToFilter.filter(item =>
+        item.Category === selectedCategory
       );
     }
 
@@ -46,11 +54,10 @@ export function useTimeline(searchQuery: string) {
     // Reset displayed items to the first chunk of the filtered list
     setDisplayedItems(itemsToFilter.slice(0, ITEMS_PER_LOAD));
 
-  }, [fullItems, searchQuery]); // Re-run when fullItems or searchQuery changes
+  }, [fullItems, searchQuery, selectedCategory]);
 
   // Function to load the next chunk of items from the *filtered* list
   const loadMore = useCallback(() => {
-    // Use filteredItems for loading more logic
     if (loadingMore || displayedItems.length === filteredItems.length) return;
 
     setLoadingMore(true);
@@ -65,8 +72,15 @@ export function useTimeline(searchQuery: string) {
       setLoadingMore(false);
     }, 300);
 
-  }, [loadingMore, displayedItems, filteredItems]); // Dependencies for useCallback
+  }, [loadingMore, displayedItems, filteredItems]);
 
-  // Return filteredItems count for rendering end message
-  return { displayedItems, loading, error, loadMore, loadingMore, filteredItemsCount: filteredItems.length };
+  return { 
+    displayedItems, 
+    loading, 
+    error, 
+    loadMore, 
+    loadingMore, 
+    filteredItemsCount: filteredItems.length,
+    categories 
+  };
 } 

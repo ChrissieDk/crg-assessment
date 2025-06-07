@@ -5,8 +5,17 @@ import { useState } from 'react';
 function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAudioUrl, setSelectedAudioUrl] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { displayedItems, loading, error, loadMore, loadingMore, filteredItemsCount } = useTimeline(searchQuery);
+  const { 
+    displayedItems, 
+    loading, 
+    error, 
+    loadMore, 
+    loadingMore, 
+    filteredItemsCount,
+    categories 
+  } = useTimeline(searchQuery, selectedCategory);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -24,9 +33,33 @@ function App() {
     setSelectedAudioUrl(null);
   };
 
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
+        {/* Category Dropdown */}
+        <div className="mb-6 flex justify-center">
+          <div className="w-full max-w-md">
+            <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 sr-only">Select Category</label>
+            <select
+              id="category-select"
+              name="category-select"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              value={selectedCategory || ''} // Use empty string for 'All' option value
+              onChange={(e) => handleCategorySelect(e.target.value === '' ? null : e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="mb-8 flex justify-center">
           <div className="relative w-full max-w-md flex items-center">
@@ -46,9 +79,9 @@ function App() {
                 className="absolute right-2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label="Clear search"
               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                 </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             )}
           </div>
@@ -67,8 +100,8 @@ function App() {
               onAudioSelect={handleAudioSelect}
             />
           ) : (
-            searchQuery ? (
-              <p className="text-center text-gray-600 text-lg">No items found matching your search criteria.</p>
+            searchQuery || selectedCategory ? (
+              <p className="text-center text-gray-600 text-lg">No items found matching your criteria.</p>
             ) : (
               <p className="text-center text-gray-600 text-lg">No timeline items available.</p>
             )
@@ -77,22 +110,21 @@ function App() {
       </div>
 
       {selectedAudioUrl && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-xl relative max-w-md w-full">
-               <audio key={selectedAudioUrl} src={selectedAudioUrl} controls autoPlay className="w-full" />
-               <button
-                onClick={handleCloseAudioPlayer}
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                aria-label="Close audio player"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl relative max-w-md w-full">
+            <audio key={selectedAudioUrl} src={selectedAudioUrl} controls autoPlay className="w-full" />
+            <button
+              onClick={handleCloseAudioPlayer}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              aria-label="Close audio player"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        )}
-
+        </div>
+      )}
     </div>
   );
 }
