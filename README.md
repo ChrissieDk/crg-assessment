@@ -5,28 +5,31 @@ A modern React application for viewing and filtering timeline items with audio p
 ## Features
 
 - View timeline items in a responsive grid layout
-- Filter items by category using a dropdown menu
-- Search items by date
+- Search items by date or category
 - Audio playback functionality
 - Infinite scroll loading
 - Responsive design for mobile and desktop
 - Modern UI with Tailwind CSS
+- Caching of data to ensure great user experience and limit delays
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - Node.js (v16 or higher)
 - npm (v7 or higher)
 
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone [repository-url]
 cd CRG-assessment
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -88,6 +91,7 @@ The application integrates with an API endpoint at `https://arthurfrost.qflo.co.
 ## Browser Support
 
 The application is tested and works on:
+
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
@@ -100,6 +104,5 @@ The application is tested and works on:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
 
 // documentation created for current version as of 2025/06/07 - updated upon deployment of new features
