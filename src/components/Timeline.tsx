@@ -8,6 +8,7 @@ interface TimelineProps {
   loadingMore: boolean;
   filteredItemsCount: number;
   onAudioSelect: (audioUrl: string) => void;
+  sidebarOpen: boolean; 
 }
 
 const Timeline: React.FC<TimelineProps> = ({
@@ -16,40 +17,70 @@ const Timeline: React.FC<TimelineProps> = ({
   loadingMore,
   filteredItemsCount,
   onAudioSelect,
+  sidebarOpen,
 }) => {
   const baseUrl = 'https://arthurfrost.qflo.co.za/';
   const observerTarget = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   // Set up Intersection Observer
   useEffect(() => {
     const currentTarget = observerTarget.current;
     if (!currentTarget) return;
 
-    const observer = new IntersectionObserver(
+    // Disconnect previous observer if it exists
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
       entries => {
-        // Only load more if the target is visible AND there are more items to load
-        if (entries[0].isIntersecting && displayedItems.length < filteredItemsCount) {
+        if (entries[0].isIntersecting && !loadingMore && displayedItems.length < filteredItemsCount) {
           loadMore();
         }
       },
-      { threshold: 0.1 } // Trigger when 10% of the target is visible
+      { 
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
     );
 
-    observer.observe(currentTarget);
+    observerRef.current.observe(currentTarget);
 
     return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
       }
     };
-  }, [loadMore, filteredItemsCount, displayedItems]);
+  }, [loadMore, filteredItemsCount, displayedItems.length, loadingMore]);
+
+  // Dynamic grid classes based on available space
+  const getGridClasses = () => {
+    const baseGrid = "grid gap-6";
+    // Adjust grid columns based on sidebar state and screen size
+    if (sidebarOpen) {
+      return `${baseGrid} grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3`;
+    } else {
+      return `${baseGrid} grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`;
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       {displayedItems.length === 0 && !loadingMore && filteredItemsCount === 0 ? (
         <p className="text-center text-gray-600">No timeline items available.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={getGridClasses()}>
           {displayedItems.map((item) => (
             <TimelineItem
               key={item.Id}
@@ -83,4 +114,4 @@ const Timeline: React.FC<TimelineProps> = ({
   );
 };
 
-export default Timeline; 
+export default Timeline;
