@@ -88,6 +88,43 @@ The application integrates with an API endpoint at `https://arthurfrost.qflo.co.
 - `npm run lint` - Run ESLint
 - `npm run preview` - Preview production build locally
 
+## Deployment
+
+The application is deployed using Vercel with two environments:
+
+### Production Environment
+
+- **Branch**: `master`
+- **URL**: [https://crg-assessment.vercel.app](https://crg-assessment.vercel.app)
+- **Auto-deploy**: Triggered on push to `master` branch
+
+### Staging Environment
+
+- **Branch**: `develop`
+- **URL**: [https://crg-assessment-git-develop-chrissiedks-projects.vercel.app](https://crg-assessment-git-develop-chrissiedks-projects.vercel.app)
+- **Auto-deploy**: Triggered on push to `develop` branch
+
+### Deployment Workflow
+
+```bash
+# Development workflow
+git checkout develop
+git add .
+git commit -m "feat: add new feature"
+git push origin develop  # Triggers staging deployment
+
+# Production workflow
+git checkout master
+git merge develop
+git push origin master   # Triggers production deployment
+```
+
+### Branch Strategy
+
+- `master` - Production-ready code
+- `develop` - Latest development changes and features
+- `feature/*` - Individual feature branches (merged into develop)
+
 ## Browser Support
 
 The application is tested and works on:
