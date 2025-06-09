@@ -14,7 +14,7 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ item, baseUrl, onAudioSelec
         <img
           src={`${baseUrl}${item.Image.replace('\\', '/')}`}
           alt={item.Title || 'Timeline Image'}
-          className="w-full h-48 object-cover aspect-video"
+          className="w-full h-48 p-2 rounded-xl"
           loading="lazy"
         />
       )}
