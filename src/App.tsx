@@ -52,7 +52,7 @@ function App() {
         setIsOpen={setSidebarOpen}
       />
 
-      <div className={`flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'} ml-0`}>
+      <div className={`flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64 ml-16' : 'md:ml-16 ml-16'}`}>
         <div className="container mx-auto px-4 py-8">
           {loading && <span className="text-blue-500">Loading initial data...</span>}
           {error && <span className="text-red-500">{error}</span>}
