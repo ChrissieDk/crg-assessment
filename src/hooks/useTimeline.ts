@@ -1,86 +1,109 @@
-import { useEffect, useState, useCallback } from 'react';
-import api from '../utils/axios';
-import type { TimelineItem, TimelineResponse } from '../types/Timeline';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import api from "../utils/axios";
+import type { TimelineItem, TimelineResponse } from "../types/Timeline";
 
 const ITEMS_PER_LOAD = 20;
 
-export function useTimeline(searchQuery: string, selectedCategory: string | null) {
+export function useTimeline(
+  searchQuery: string,
+  selectedCategory: string | null
+) {
   const [fullItems, setFullItems] = useState<TimelineItem[]>([]);
-  const [filteredItems, setFilteredItems] = useState<TimelineItem[]>([]);
-  const [displayedItems, setDisplayedItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [displayedItems, setDisplayedItems] = useState<TimelineItem[]>([]);
 
+  // Fetch data on mount
   useEffect(() => {
-    setLoading(true);
-    api.get<TimelineResponse>('getTimeline.php')
-      .then(response => {
-        if (response.data && Array.isArray(response.data.Timeline)) {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get<TimelineResponse>("getTimeline.php");
+
+        if (response.data?.Timeline && Array.isArray(response.data.Timeline)) {
           setFullItems(response.data.Timeline);
-          // Extract unique categories
-          const uniqueCategories = Array.from(new Set(response.data.Timeline.map(item => item.Category)));
-          setCategories(uniqueCategories);
         } else {
-          setError('Invalid data structure received from API');
+          setError("Invalid data received from server");
         }
+      } catch (err) {
+        console.error("API Error:", err);
+        setError("Failed to fetch timeline data");
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error('API Error:', err);
-        setError('Failed to fetch timeline data');
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Effect to filter items whenever fullItems, searchQuery, or selectedCategory changes
-  useEffect(() => {
-    let itemsToFilter = fullItems;
+  // Filter items based on search and category
+  const filteredItems = useMemo(() => {
+    let items = fullItems;
 
     if (searchQuery) {
-      itemsToFilter = itemsToFilter.filter(item =>
-        item.CreateDate.toLowerCase().startsWith(searchQuery.toLowerCase())
+      const query = searchQuery.toLowerCase().trim();
+      items = items.filter(
+        (item) =>
+          item.CreateDate.toLowerCase().startsWith(query) ||
+          item.Category.toLowerCase().includes(query)
       );
     }
 
     if (selectedCategory) {
-      itemsToFilter = itemsToFilter.filter(item =>
-        item.Category === selectedCategory
-      );
+      items = items.filter((item) => item.Category === selectedCategory);
     }
 
-    setFilteredItems(itemsToFilter);
-    // Reset displayed items to the first chunk of the filtered list
-    setDisplayedItems(itemsToFilter.slice(0, ITEMS_PER_LOAD));
-
+    return items;
   }, [fullItems, searchQuery, selectedCategory]);
 
-  // Function to load the next chunk of items from the *filtered* list
+  // Extract unique categories
+  const categories = useMemo(
+    () => [...new Set(fullItems.map((item) => item.Category))].sort(),
+    [fullItems]
+  );
+
+  // Reset displayed items when filters change
+  useEffect(() => {
+    setDisplayedItems(filteredItems.slice(0, ITEMS_PER_LOAD));
+    setLoadingMore(false);
+  }, [filteredItems]);
+
+  // Load more items
   const loadMore = useCallback(() => {
-    if (loadingMore || displayedItems.length === filteredItems.length) return;
+    if (loadingMore) return;
 
     setLoadingMore(true);
 
-    const nextItems = filteredItems.slice(
-      displayedItems.length,
-      displayedItems.length + ITEMS_PER_LOAD
-    );
-
     setTimeout(() => {
-      setDisplayedItems(prevItems => [...prevItems, ...nextItems]);
-      setLoadingMore(false);
-    }, 300);
+      setDisplayedItems((prev) => {
+        const currentLength = prev.length;
+        const hasMore = currentLength < filteredItems.length;
 
-  }, [loadingMore, displayedItems, filteredItems]);
+        if (!hasMore) {
+          setLoadingMore(false);
+          return prev;
+        }
 
-  return { 
-    displayedItems, 
-    loading, 
-    error, 
-    loadMore, 
-    loadingMore, 
+        const nextItems = filteredItems.slice(
+          currentLength,
+          currentLength + ITEMS_PER_LOAD
+        );
+        setLoadingMore(false);
+        return [...prev, ...nextItems];
+      });
+    }, 0);
+  }, [filteredItems, loadingMore]);
+
+  return {
+    displayedItems,
+    loading,
+    error,
+    loadMore,
+    loadingMore,
     filteredItemsCount: filteredItems.length,
-    categories 
+    categories,
+    hasMoreItems: displayedItems.length < filteredItems.length,
   };
-} 
+}
