@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Search, X, ChevronRight } from "lucide-react";
 
 interface SidebarProps {
@@ -22,6 +22,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   setIsOpen,
 }) => {
+  // When search query changes, ensure we're not filtering by category
+  useEffect(() => {
+    if (searchQuery && selectedCategory) {
+      onCategorySelect(null);
+    }
+  }, [searchQuery, selectedCategory, onCategorySelect]);
+
+  // Handle search input changes
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (selectedCategory && event.target.value) {
+      onCategorySelect(null);
+    }
+    onSearchChange(event);
+  };
+
   const getCategoryButtonClass = (category: string | null) => {
     const baseClass = "w-full text-left px-3 py-2 rounded-md transition-colors";
     const hiddenClass = !isOpen ? "hidden" : "";
@@ -61,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               type="text"
               placeholder={isOpen ? "Search by date or category..." : ""}
               value={searchQuery}
-              onChange={onSearchChange}
+              onChange={handleSearchChange}
               className={`w-full pl-10 pr-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
                 !isOpen ? "opacity-0 w-0" : "opacity-100"
               }`}
@@ -96,15 +111,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               All Categories
             </button>
 
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => onCategorySelect(category)}
-                className={getCategoryButtonClass(category)}
-              >
-                {category}
-              </button>
-            ))}
+            {categories
+              .filter(category => category && category.trim() !== '')
+              .map((category) => (
+                <button
+                  key={category}
+                  onClick={() => onCategorySelect(category)}
+                  className={getCategoryButtonClass(category)}
+                >
+                  {category}
+                </button>
+              ))}
           </div>
         </div>
       </div>
