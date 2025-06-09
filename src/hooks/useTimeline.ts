@@ -47,24 +47,31 @@ export function useTimeline(searchQuery: string, selectedCategory: string | null
     [fullItems]
   );
 
+  // Reset displayed items when filters change
   useEffect(() => {
     setDisplayedItems(filteredItems.slice(0, ITEMS_PER_LOAD));
+    setLoadingMore(false);
   }, [filteredItems]);
 
   const loadMore = useCallback(() => {
-    if (loadingMore || displayedItems.length === filteredItems.length) return;
-
     setLoadingMore(true);
-    const nextItems = filteredItems.slice(
-      displayedItems.length,
-      displayedItems.length + ITEMS_PER_LOAD
-    );
-
-    setTimeout(() => {
-      setDisplayedItems(prevItems => [...prevItems, ...nextItems]);
+    
+    requestAnimationFrame(() => {
+      setDisplayedItems(prevItems => {
+        // Calculate how many more items to load
+        const currentLength = prevItems.length;
+        const nextBatch = filteredItems.slice(currentLength, currentLength + ITEMS_PER_LOAD);
+        
+        // Only append if we have more items and we're not exceeding the filtered items
+        if (nextBatch.length > 0 && currentLength < filteredItems.length) {
+          return [...prevItems, ...nextBatch];
+        }
+        
+        return prevItems;
+      });
       setLoadingMore(false);
-    }, 300);
-  }, [loadingMore, displayedItems, filteredItems]);
+    });
+  }, [filteredItems]);
 
   return { 
     displayedItems, 
@@ -75,4 +82,4 @@ export function useTimeline(searchQuery: string, selectedCategory: string | null
     filteredItemsCount: filteredItems.length,
     categories 
   };
-} 
+}

@@ -1,4 +1,5 @@
 import Timeline from './components/Timeline';
+import Sidebar from './components/Sidebar';
 import { useTimeline } from './hooks/useTimeline';
 import { useState } from 'react';
 
@@ -6,6 +7,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAudioUrl, setSelectedAudioUrl] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { 
     displayedItems, 
@@ -38,75 +40,42 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Category Dropdown */}
-        <div className="mb-6 flex justify-center">
-          <div className="w-full max-w-md">
-            <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 sr-only">Select Category</label>
-            <select
-              id="category-select"
-              name="category-select"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              value={selectedCategory || ''} // Use empty string for 'All' option value
-              onChange={(e) => handleCategorySelect(e.target.value === '' ? null : e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={handleCategorySelect}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onClearSearch={handleClearSearch}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+      />
 
-        <div className="mb-8 flex justify-center">
-          <div className="relative w-full max-w-md flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search by date (e.g., 07 Jul 2020)"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={handleClearSearch}
-                className="absolute right-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label="Clear search"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
+      <div className={`flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'} ml-0`}>
+        <div className="container mx-auto px-4 py-8">
+          {loading && <span className="text-blue-500">Loading initial data...</span>}
+          {error && <span className="text-red-500">{error}</span>}
 
-        {loading && <span className="text-blue-500">Loading initial data...</span>}
-        {error && <span className="text-red-500">{error}</span>}
-
-        {!loading && !error && (
-          filteredItemsCount > 0 ? (
-            <Timeline
-              displayedItems={displayedItems}
-              loadMore={loadMore}
-              loadingMore={loadingMore}
-              filteredItemsCount={filteredItemsCount}
-              onAudioSelect={handleAudioSelect}
-            />
-          ) : (
-            searchQuery || selectedCategory ? (
-              <p className="text-center text-gray-600 text-lg">No items found matching your criteria.</p>
+          {!loading && !error && (
+            filteredItemsCount > 0 ? (
+              <Timeline
+                displayedItems={displayedItems}
+                loadMore={loadMore}
+                loadingMore={loadingMore}
+                filteredItemsCount={filteredItemsCount}
+                onAudioSelect={handleAudioSelect}
+                sidebarOpen={sidebarOpen}
+              />
             ) : (
-              <p className="text-center text-gray-600 text-lg">No timeline items available.</p>
+              searchQuery || selectedCategory ? (
+                <p className="text-center text-gray-600 text-lg">No items found matching your criteria.</p>
+              ) : (
+                <p className="text-center text-gray-600 text-lg">No timeline items available.</p>
+              )
             )
-          )
-        )}
+          )}
+        </div>
       </div>
 
       {selectedAudioUrl && (
